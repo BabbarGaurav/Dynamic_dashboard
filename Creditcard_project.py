@@ -8,9 +8,10 @@ import streamlit_antd_components as sac
 from plotly.subplots import make_subplots
 import tarfile
 
-def filtering_function(filtered_df, occupation_f, age_group_f, income_group_f):
+
+def filtering_function(filtered_df, occupation_f, age_group_f, income_group_f, city_f):
     # global filtered_df
-    if not occupation_f and not age_group_f and not income_group_f:
+    if not occupation_f and not age_group_f and not income_group_f and not city_f:
          return df1.copy()
     else:
         if occupation_f:
@@ -19,16 +20,17 @@ def filtering_function(filtered_df, occupation_f, age_group_f, income_group_f):
             filtered_df = filtered_df[filtered_df['age_group'].isin(age_group_f)]
         if income_group_f:
             filtered_df = filtered_df[filtered_df['income_group'].isin(income_group_f)]
+        if city_f:
+            filtered_df = filtered_df[filtered_df['city'].isin(city_f)]
     return filtered_df
 
 tar_gz_file_path = "fact_spends.tar.gz"
-csv_file_name = "fact_spends.csv" 
-
+csv_file_name = "fact_spends.csv"
 with tarfile.open(tar_gz_file_path, 'r:gz') as tar:
     tar.extract(csv_file_name)
 
+df2 = pd.read_csv(csv_file_name)
 df1 = pd.read_csv('dim_customers.csv')
-df2 = pd.read_csv('fact_spends.csv')
 spends_df = df2.groupby(['customer_id', 'month']).sum().groupby('customer_id').agg({'spend': 'median'}).reset_index()
 bins = list(range(20000, 100000, 10000))
 labels = ['20k-30k', '30k-40k', '40k-50k', '50k-60k', '60k-70k', '70k-80k', '80k-90k']
@@ -37,8 +39,15 @@ df1['income_group']= pd.cut(df1['avg_income'], bins= bins, labels=labels, right=
 # filtered_df = pd.merge(filtered_df, spends_df, on = 'customer_id', how = 'inner')
 
 logo = 'https://avatars.githubusercontent.com/u/65004296?s=200&v=4'
-st.set_page_config(layout='wide')
+st.set_page_config(page_title='Income Analysis', layout='wide')
 st.sidebar.header('Choose your filters: ')
+st.sidebar.markdown("""
+        <style>
+               .block-container {
+                    padding-top: 1rem;
+                }
+        </style>
+        """, unsafe_allow_html=True)
 
 #occupation_f = st.sidebar.multiselect('Pick the occupation', df1['occupation'].unique())
 with st.sidebar:
@@ -47,13 +56,22 @@ with st.sidebar:
     age_group_f = sac.chip(label = 'Pick the age group', items=dict.fromkeys(df1['age_group'].unique()), size = 'xs', align = 'start', multiple = True, direction = 'horizontal')
        
     income_group_f = sac.chip(label = 'Pick the Income group', items=dict.fromkeys(df1['income_group'].unique()), size = 'xs', align = 'start', multiple = True, direction = 'horizontal')
-    
-    
+
+st.markdown("""
+        <style>
+               .block-container {
+                    padding-top: 2rem;
+                    padding-right: 2rem;
+                }
+        </style>
+        """, unsafe_allow_html=True)
+city_f = sac.chip(items=dict.fromkeys(df1['city'].unique()), radius='xs', size='md', align='start', multiple=True, variant='light', direction='horizontal')
+
 filtered_df = df1.copy()
 
-filtered_df = filtering_function(filtered_df, occupation_f, age_group_f, income_group_f)
-   
-col1, col2 = st.columns((0.45,0.55))
+filtered_df = filtering_function(filtered_df, occupation_f, age_group_f, income_group_f, city_f)
+
+col1, col2 = st.columns((0.5,0.5))
 
 with col1:
 
@@ -79,7 +97,7 @@ with col1:
             title='<b>Gender & Marital Status Distribution<b>',
             height = 200,
             width =600,
-            margin = dict(l=20, b=20)
+            margin = dict(l=20, b=20, t=100)
         )
 
         st.plotly_chart(matrix_fig, user_container_width = True)
@@ -140,7 +158,7 @@ with col2:
     
         occupation_df = filtered_df["occupation"].value_counts(normalize=True).sort_index().mul(100).round(2)
         colors_occupation = ['#b20710' if occupation == max(occupation_df) else '#f5f5f1' for occupation in occupation_df]
-        occupation_df_fig = make_subplots(rows=1, cols=2, column_widths=[0.5, 0.5], shared_yaxes=True, horizontal_spacing=.05)
+        occupation_df_fig = make_subplots(rows=1, cols=2, column_widths=[0.5, 0.5], shared_yaxes=True, horizontal_spacing=.02)
 
         occupation_df_fig.add_trace(go.Bar(
             y = [val.replace(" ", "<br>") for val in occupation_df.index],
@@ -182,7 +200,7 @@ with col2:
         st.plotly_chart(occupation_df_fig, user_container_width = True)
         
         
-col3, col4 = st.columns((0.45,0.55))
+col3, col4 = st.columns((0.5,0.5))
     
 with col3:
 
@@ -227,7 +245,7 @@ with col4:
         age_df = filtered_df["age_group"].value_counts(normalize=True).sort_index().mul(100).round(2)
         colors_age = ['#b20710' if age_group == max(age_df) else '#f5f5f1' for age_group in age_df]
 
-        age_df_fig = make_subplots(rows=1, cols=2, column_widths=[0.5, 0.5], shared_yaxes=True, horizontal_spacing=.05)
+        age_df_fig = make_subplots(rows=1, cols=2, column_widths=[0.45, 0.55], shared_yaxes=True, horizontal_spacing=.06)
         median_income = int(filtered_df['avg_income'].median())
 
         # Unique occupations in the DataFrame
