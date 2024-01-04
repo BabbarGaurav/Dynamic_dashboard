@@ -30,7 +30,7 @@ with tarfile.open(tar_gz_file_path, 'r:gz') as tar:
 
 df2 = pd.read_csv(csv_file_name)
 df1 = pd.read_csv('dim_customers.csv')
-st.set_page_config(page_title='Income Analysis', layout='wide')
+st.set_page_config(page_title='Spend Analysis', layout='wide')
 st.sidebar.markdown("""
         <style>
                .block-container {
