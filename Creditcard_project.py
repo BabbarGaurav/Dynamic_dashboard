@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import streamlit as st
 import streamlit_antd_components as sac
 from plotly.subplots import make_subplots
+import tarfile
 
 def filtering_function(filtered_df, occupation_f, age_group_f, income_group_f):
     # global filtered_df
@@ -20,7 +21,11 @@ def filtering_function(filtered_df, occupation_f, age_group_f, income_group_f):
             filtered_df = filtered_df[filtered_df['income_group'].isin(income_group_f)]
     return filtered_df
 
+tar_gz_file_path = "fact_spends.tar.gz"
+csv_file_name = "your_csv_file.csv"  # Replace with the actual name of your CSV file inside the archive
 
+with tarfile.open(tar_gz_file_path, 'r:gz') as tar:
+    tar.extract(csv_file_name)
 
 df1 = pd.read_csv('dim_customers.csv')
 df2 = pd.read_csv('fact_spends.csv')
