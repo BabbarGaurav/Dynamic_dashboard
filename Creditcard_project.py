@@ -22,7 +22,7 @@ def filtering_function(filtered_df, occupation_f, age_group_f, income_group_f):
     return filtered_df
 
 tar_gz_file_path = "fact_spends.tar.gz"
-csv_file_name = "your_csv_file.csv"  # Replace with the actual name of your CSV file inside the archive
+csv_file_name = "fact_spends.csv" 
 
 with tarfile.open(tar_gz_file_path, 'r:gz') as tar:
     tar.extract(csv_file_name)
