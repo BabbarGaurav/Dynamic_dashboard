@@ -57,6 +57,8 @@ avg_spend_by_category_gateway['percentage'] = (avg_spend_by_category_gateway['sp
 # Define the color order for payment types
 payment_type_order = df2['payment_type'].unique()
 
+cmap = ['#221f1f', '#b20710', '#e50914', '#f5f5f1']
+
 # Create a percentage stacked horizontal bar graph using go.Figure
 fig_percentage_stacked = go.Figure()
 
