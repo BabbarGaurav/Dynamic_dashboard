@@ -73,7 +73,7 @@ for payment_type in payment_type_order:
             name=payment_type,
             text=data_subset['percentage'].round(2).astype(str) + '%',  # Text for the percentage
             textposition='inside',  # Place text inside the bars
-            # marker_color=cmap[payment_type_order.tolist().index(payment_type)],
+            marker_color=cmap[payment_type_order.tolist().index(payment_type)],
         )
     )
 
@@ -82,7 +82,6 @@ fig_percentage_stacked.update_layout(
     xaxis_title='Percentage',
     barmode='stack',
     margin=dict(t=40, b=20),
-    autosize=False,
-    width=1000
+    autosize=True
 )
 st.plotly_chart(fig_percentage_stacked , user_container_width=True)
