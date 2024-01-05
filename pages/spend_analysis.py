@@ -34,7 +34,7 @@ st.set_page_config(page_title='Spend Analysis', layout='wide')
 st.sidebar.markdown("""
         <style>
                .block-container {
-                    padding-top: 1rem;
+                    padding-top: 3rem;
                 }
         </style>
         """, unsafe_allow_html=True)
