@@ -82,9 +82,11 @@ avg_spend_by_category_gateway['percentage'] = (avg_spend_by_category_gateway['sp
 # Define the color order for payment types
 payment_type_order = df3['payment_type'].unique()
 
+category_df = df3_mean.groupby(['customer_id', 'category'])['spend'].sum().reset_index().groupby('category')['spend'].mean().reset_index().round(0).sort_values(by='spend', ascending = True)
+
 cmap = ['#221f1f', '#b20710', '#e50914', '#f5f5f1']
 
-col1,_ = st.columns([1, 0.1])
+col1, col2 = st.columns([2])
 
 with col1:
     fig_percentage_stacked = go.Figure()
@@ -129,14 +131,25 @@ with col1:
     fig_scatter.update_layout(
         margin=dict(t=20),
     )
+    category_fig = go.Figure(go.Bar(x=category_df['spend'],
+                                y=category_df['category'],
+                                orientation = 'h',
+                                marker_color = "#b20710",
+                                text = category_df['spend'],
+                                texttemplate = '%{text}',
+                                textposition="inside"
+                                )
+    )
 
+    category_fig.update_layout(margin= dict(t=50, b=50))
+    
     tab1, tab2 = st.tabs(["Percentage Spend on Category by payment mode", " Absolute Spend on Category by payment mode"])
 
     with tab1:
-        st.plotly_chart(fig_percentage_stacked, use_container_width=True)
+        st.plotly_chart(category_fig, use_container_width=True)
 
     with tab2:
-        st.plotly_chart(fig_scatter, use_container_width=True)
+        st.plotly_chart(fig_percentage_stacked, use_container_width=True)
 
 
 col2,_ = st.columns([1,0.1])
