@@ -40,6 +40,14 @@ df3['income_group'] = pd.cut(df3['avg_income'], bins=bins, labels=labels, right=
 st.set_page_config(page_title='Spend Analysis', layout='wide')
 st.sidebar.header('Choose your filters: ')
 
+st.sidebar.markdown("""
+        <style>
+               .block-container {
+                    padding-top: 1rem;
+                }
+        </style>
+        """, unsafe_allow_html=True)
+
 with st.sidebar:
     occupation_f = sac.chip(label='Pick the occupation', items=dict.fromkeys(df3['occupation'].unique()), size='xs',
                             align='start', multiple=True, direction='horizontal')
@@ -54,7 +62,7 @@ st.markdown("""
         <style>
                .block-container {
                     padding-top: 2rem;
-                    padding-right: 2rem;
+                    padding-left: 3rem;
                 }
         </style>
         """, unsafe_allow_html=True)
@@ -81,12 +89,16 @@ avg_spend_by_category_gateway['percentage'] = (avg_spend_by_category_gateway['sp
 
 # Define the color order for payment types
 payment_type_order = df3['payment_type'].unique()
-
-category_df = df3_mean.groupby(['customer_id', 'category'])['spend'].sum().reset_index().groupby('category')['spend'].mean().reset_index().round(0).sort_values(by='spend', ascending = True)
+df3_mean = filtered_df.groupby(['customer_id', 'age_group', 'city', 'occupation', 'gender',
+       'marital status', 'avg_income', 'avg_spend', 'category',
+       'payment_type'])['spend'].mean().reset_index().round(0)
+category_df = df3_mean.groupby(['customer_id', 'category'])['spend'].sum().reset_index().groupby('category')['spend'].mean().reset_index().round(0)#.sort_values(by='spend', ascending = False)
+max_values_category = category_df.nlargest(3,'spend')
+colors_category = ['#b20710' if value in max_values_category['spend'].values else '#f5f5f1' for value in category_df['spend']]
 
 cmap = ['#221f1f', '#b20710', '#e50914', '#f5f5f1']
 
-col1, col2 = st.columns([2])
+col1, col2 = st.columns([0.5,0.5])
 
 with col1:
     fig_percentage_stacked = go.Figure()
@@ -110,40 +122,31 @@ with col1:
     fig_percentage_stacked.update_layout(
         xaxis_title='Percentage',
         barmode='stack',
-        margin=dict(t=20),
+        margin=dict(t=20, r=0, b=100),
         legend=dict(
             orientation='h',
-            x=0.29,
-            y=1.15),
+            x=0.19,
+            y=1.11),
     )
 
-    median_avg_spend = filtered_df.groupby(['category', 'payment_type'])['spend'].median().reset_index()
-
-    fig_scatter = px.scatter(
-        median_avg_spend,
-        y='category',
-        x='payment_type',
-        size='spend',
-        color_discrete_sequence=['white'],  # Set the color to white
-        labels={'category': '', 'payment_type': '', 'spend': 'Median<br>Avg<br>Spend'},
+    category_fig = go.Figure(
+    go.Bar(x=category_df['spend'],
+           y=category_df['category'],
+           orientation = 'h',
+           marker_color = colors_category,
+           marker_line_color = '#221f1f',
+           text = category_df['spend'],
+           texttemplate = '%{text}',
+           textposition="inside",
+          )
     )
 
-    fig_scatter.update_layout(
-        margin=dict(t=20),
-    )
-    category_fig = go.Figure(go.Bar(x=category_df['spend'],
-                                y=category_df['category'],
-                                orientation = 'h',
-                                marker_color = "#b20710",
-                                text = category_df['spend'],
-                                texttemplate = '%{text}',
-                                textposition="inside"
-                                )
-    )
+    category_fig.update_layout(margin= dict(t=35, b=100),xaxis_title='Percentage')
 
-    category_fig.update_layout(margin= dict(t=50, b=50))
+
     
-    tab1, tab2 = st.tabs(["Percentage Spend on Category by payment mode", " Absolute Spend on Category by payment mode"])
+    category_fig.update_xaxes(range=[0,6000])
+    tab1, tab2 = st.tabs(["Average category spend", " Category spend by payment mode"])
 
     with tab1:
         st.plotly_chart(category_fig, use_container_width=True)
@@ -151,25 +154,72 @@ with col1:
     with tab2:
         st.plotly_chart(fig_percentage_stacked, use_container_width=True)
 
-
-col2,_ = st.columns([1,0.1])
-
 with col2:
+    
+    
+    median_avg_spend = filtered_df.groupby(['category', 'payment_type'])['spend'].median().reset_index()
+
+    fig_scatter = px.scatter(
+        median_avg_spend,
+        y='category',
+        x='payment_type',
+        size='spend',
+        color_discrete_sequence=['#e50914'],  # Set the color to white
+        labels={'category': '', 'payment_type': '', 'spend': 'Median<br>Avg<br>Spend'},
+    )
+
+    fig_scatter.update_layout(title = '<br>    Average Category Spend Absolute<br>',
+        margin=dict(t=100),
+    )
+    
+    st.plotly_chart(fig_scatter, use_container_width=True)
+
+col3,_ = st.columns([1,0.1])
+
+with col3:
     payment_type_df = filtered_df.groupby(['customer_id', 'category', 'payment_type']).agg(
         {'spend': 'median', 'avg_spend': 'max', 'avg_inc_utl': 'max'}).reset_index().groupby(
         ['customer_id', 'payment_type']).agg({'spend': 'sum', 'avg_spend': 'max', 'avg_inc_utl': 'max'}).reset_index()
     credit_spend_df = payment_type_df[payment_type_df['payment_type'] == 'Credit Card'].copy()
     credit_spend_df['credit_utl'] = (credit_spend_df['spend'] * 100 / credit_spend_df['avg_spend']).round(2)
 
-    quad_fig = go.Figure(data=go.Scatter(x=credit_spend_df['avg_inc_utl'], y=credit_spend_df['credit_utl'], mode='markers',
-                                         marker=dict(size=3, color='#f5f5f1')))
+    quad_fig = go.Figure(data=go.Scatter(x = credit_spend_df['avg_inc_utl'], y=credit_spend_df['avg_spend'], mode = 'markers', marker = dict(size = 3, color = 'white')))
 
-    quad_fig.update_layout(margin=dict(t=40),
+    quad_fig.update_layout(autosize = False)
+
+    high_spend_points = credit_spend_df[
+        (credit_spend_df['avg_spend'] > 23000) &
+        (credit_spend_df['avg_inc_utl'] > 40)
+    ]
+
+    # Calculate the percentage of markers captured
+    percentage_captured = len(high_spend_points) / len(credit_spend_df) * 100
+
+    # Add Annotation Box
+    quad_fig.add_shape(
+        type='rect',
+        x0=40,
+        x1=max(credit_spend_df['avg_inc_utl']),
+        y0=23000,
+        y1=max(credit_spend_df['avg_spend']),
+        line=dict(color='red'),
+        fillcolor='rgba(255, 0, 0, 0)'
+    )
+
+    # Add Text above Annotation
+    quad_fig.add_annotation(
+        x=40 + 5,
+        y=50000 + 50,
+        text=f'{percentage_captured:.2f}%',
+        showarrow=False,
+        font=dict(size=15, color= 'white'),
+    )
+    quad_fig.update_layout(margin=dict(t=25),
                            title='<b>Income Utilisation & Credit Utilisation Spread<b>',
                            xaxis_title='Income Utilisation %',
                            yaxis_title='Credit Utilisation %',
                            )
-    quad_fig.update_xaxes(range=[15, 80])
-    quad_fig.update_yaxes(range=[20, 55])
+    # quad_fig.update_xaxes(range=[15, 80])
+    # quad_fig.update_yaxes(range=[20, 55])
 
     st.plotly_chart(quad_fig, use_container_width=True)
