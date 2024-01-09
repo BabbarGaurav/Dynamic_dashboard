@@ -61,7 +61,7 @@ st.markdown("""
         <style>
                .block-container {
                     padding-top: 2rem;
-                    padding-right: 2rem;
+                    padding-left: 3rem;
                 }
         </style>
         """, unsafe_allow_html=True)
