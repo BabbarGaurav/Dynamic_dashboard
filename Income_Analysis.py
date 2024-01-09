@@ -41,6 +41,7 @@ df1['income_group']= pd.cut(df1['avg_income'], bins= bins, labels=labels, right=
 logo = 'https://avatars.githubusercontent.com/u/65004296?s=200&v=4'
 st.set_page_config(page_title='Income Analysis', layout='wide')
 st.sidebar.header('Choose your filters: ')
+
 st.sidebar.markdown("""
         <style>
                .block-container {
