@@ -46,6 +46,7 @@ st.sidebar.markdown("""
         <style>
                .block-container {
                     padding-top: 1rem;
+                    padding-left: 1rem;
                 }
         </style>
         """, unsafe_allow_html=True)
