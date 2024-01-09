@@ -67,7 +67,7 @@ st.markdown("""
                 }
         </style>
         """, unsafe_allow_html=True)
-city_f = sac.chip(items=dict.fromkeys(df1['city'].unique()), radius='xs', size='md', align='start', multiple=True, variant='light', direction='horizontal')
+city_f = sac.chip(items=dict.fromkeys(df1['city'].unique()), radius='xs', size='sm', align='start', multiple=True, variant='light', direction='horizontal')
 
 filtered_df = df1.copy()
 
