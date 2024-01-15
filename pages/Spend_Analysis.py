@@ -1,3 +1,4 @@
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -41,12 +42,13 @@ st.set_page_config(page_title='Spend Analysis', layout='wide')
 st.sidebar.header('Choose your filters: ')
 
 st.sidebar.markdown("""
-        <style>
-               .block-container {
-                    padding-top: 1rem;
-                }
-        </style>
-        """, unsafe_allow_html=True)
+    <style>
+        .sidebar .sidebar-content {
+            padding-left: 1rem !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
 
 with st.sidebar:
     occupation_f = sac.chip(label='Pick the occupation', items=dict.fromkeys(df3['occupation'].unique()), size='xs',
@@ -66,6 +68,7 @@ st.markdown("""
                 }
         </style>
         """, unsafe_allow_html=True)
+
 city_f = sac.chip(items=dict.fromkeys(df1['city'].unique()), radius='xs', size='sm', align='start', multiple=True,
                   variant='light', direction='horizontal')
 
@@ -142,10 +145,8 @@ with col1:
     )
 
     category_fig.update_layout(margin= dict(t=35, b=100),xaxis_title='Percentage')
-
-
-    
     category_fig.update_xaxes(range=[0,6000])
+    
     tab1, tab2 = st.tabs(["Average category spend", " Category spend by payment mode"])
 
     with tab1:
@@ -155,7 +156,6 @@ with col1:
         st.plotly_chart(fig_percentage_stacked, use_container_width=True)
 
 with col2:
-    
     
     median_avg_spend = filtered_df.groupby(['category', 'payment_type'])['spend'].median().reset_index()
 
@@ -168,28 +168,31 @@ with col2:
         labels={'category': '', 'payment_type': '', 'spend': 'Median<br>Avg<br>Spend'},
     )
 
-    fig_scatter.update_layout(title = '<br>    Average Category Spend Absolute<br>',
+    fig_scatter.update_layout(title = '<br>   Average Category Spend <br>',
         margin=dict(t=100),
     )
     
     st.plotly_chart(fig_scatter, use_container_width=True)
 
-col3,_ = st.columns([1,0.1])
+col3, col4 = st.columns([0.5, 0.5])
 
 with col3:
-    payment_type_df = filtered_df.groupby(['customer_id', 'category', 'payment_type']).agg(
-        {'spend': 'median', 'avg_spend': 'max', 'avg_inc_utl': 'max'}).reset_index().groupby(
-        ['customer_id', 'payment_type']).agg({'spend': 'sum', 'avg_spend': 'max', 'avg_inc_utl': 'max'}).reset_index()
+    
+    payment_type_df = filtered_df.groupby(['customer_id', 'age_group', 'city', 'occupation', 'gender',
+           'marital status', 'avg_income', 'category', 'payment_type']).agg({'spend':'median', 
+            'avg_spend':'max', 'avg_inc_utl':'max'}).reset_index().groupby(['customer_id', 'age_group', 'city', 'occupation', 'gender',
+           'marital status', 'avg_income', 'payment_type']).agg({'spend':'sum','avg_spend':'max', 'avg_inc_utl':'max'}).reset_index()
     credit_spend_df = payment_type_df[payment_type_df['payment_type'] == 'Credit Card'].copy()
-    credit_spend_df['credit_utl'] = (credit_spend_df['spend'] * 100 / credit_spend_df['avg_spend']).round(2)
+    credit_spend_df['credit_utl'] = (credit_spend_df['spend']*100 / credit_spend_df['avg_spend']).round(2)
+    
 
     quad_fig = go.Figure(data=go.Scatter(x = credit_spend_df['avg_inc_utl'], y=credit_spend_df['avg_spend'], mode = 'markers', marker = dict(size = 3, color = 'white')))
 
     quad_fig.update_layout(autosize = False)
 
     high_spend_points = credit_spend_df[
-        (credit_spend_df['avg_spend'] > 23000) &
-        (credit_spend_df['avg_inc_utl'] > 40)
+        (credit_spend_df['avg_spend'] > 22000) &
+        (credit_spend_df['avg_inc_utl'] > 37)
     ]
 
     # Calculate the percentage of markers captured
@@ -198,10 +201,10 @@ with col3:
     # Add Annotation Box
     quad_fig.add_shape(
         type='rect',
-        x0=40,
-        x1=max(credit_spend_df['avg_inc_utl']),
-        y0=23000,
-        y1=max(credit_spend_df['avg_spend']),
+        x0=35,
+        x1=75.05,
+        y0=22000,
+        y1=52600,
         line=dict(color='red'),
         fillcolor='rgba(255, 0, 0, 0)'
     )
@@ -215,11 +218,53 @@ with col3:
         font=dict(size=15, color= 'white'),
     )
     quad_fig.update_layout(margin=dict(t=25),
-                           title='<b>Income Utilisation & Credit Utilisation Spread<b>',
+                           title='<b>Income Utilisation & Average Spend<b>',
                            xaxis_title='Income Utilisation %',
-                           yaxis_title='Credit Utilisation %',
+                           yaxis_title='Average Spend',
                            )
-    # quad_fig.update_xaxes(range=[15, 80])
-    # quad_fig.update_yaxes(range=[20, 55])
-
+    quad_fig.update_xaxes(range=[0, 80])
+    quad_fig.update_yaxes(range=[0, 55000])
     st.plotly_chart(quad_fig, use_container_width=True)
+
+with col4:
+    
+    quad_fig2 = go.Figure(data=go.Scatter(x = credit_spend_df['credit_utl'], y=credit_spend_df['avg_income'], mode = 'markers', marker = dict(size = 3, color = 'white')))
+
+    quad_fig2.update_layout(autosize = False)
+
+    high_spend_points2 = credit_spend_df[
+        (credit_spend_df['avg_income'] > 50000) &
+        (credit_spend_df['credit_utl'] > 35)
+    ]
+
+    # Calculate the percentage of markers captured
+    percentage_captured2 = len(high_spend_points2) / len(credit_spend_df) * 100
+
+    # Add Annotation Box
+    quad_fig2.add_shape(
+        type='rect',
+        x0=35,
+        x1=50.50,
+        y0=50000,
+        y1=86600,
+        line=dict(color='red'),
+        fillcolor='rgba(255, 0, 0, 0)'
+    )
+
+    # Add Text above Annotation
+    quad_fig2.add_annotation(
+        x=37 + 5,
+        y=82000,
+        text=f'{percentage_captured2:.2f}%',
+        showarrow=False,
+        font=dict(size=15, color= 'white'),
+    )
+    quad_fig2.update_layout(margin=dict(t=25, l=100),
+                           title='<b>Credit Utilisation & Average Income<b>',
+                           xaxis_title='Credit Utilisation %',
+                           yaxis_title='Average Income',
+                           )    
+    quad_fig2.update_xaxes(range=[20,55])
+    quad_fig2.update_yaxes(range=[0, 90000])
+
+    st.plotly_chart(quad_fig2, use_container_width=True)
